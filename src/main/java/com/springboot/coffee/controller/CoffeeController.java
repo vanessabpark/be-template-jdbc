@@ -19,6 +19,7 @@ import java.util.List;
 @RequestMapping("/v10/coffees")
 @Validated
 public class CoffeeController {
+
     private CoffeeService coffeeService;
     private CoffeeMapper mapper;
 

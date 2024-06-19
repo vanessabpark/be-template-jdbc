@@ -1,5 +1,7 @@
 package com.springboot.order.controller;
 
+import com.springboot.coffee.entity.Coffee;
+import com.springboot.coffee.service.CoffeeService;
 import com.springboot.order.entity.Order;
 import com.springboot.order.dto.OrderPostDto;
 import com.springboot.order.dto.OrderResponseDto;
@@ -9,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
@@ -21,15 +24,26 @@ import java.util.stream.Collectors;
 public class OrderController {
     private final OrderService orderService;
     private final OrderMapper mapper;
+    private final CoffeeService coffeeService;
 
-    public OrderController(OrderService orderService, OrderMapper mapper) {
+    public OrderController(OrderService orderService, OrderMapper mapper, CoffeeService coffeeService) {
         this.orderService = orderService;
         this.mapper = mapper;
+        this.coffeeService = coffeeService;
     }
 
     @PostMapping
     public ResponseEntity postOrder(@Valid @RequestBody OrderPostDto orderPostDto) {
         Order order = orderService.createOrder(mapper.orderPostDtoToOrder(orderPostDto));
+
+        URI location = UriComponentsBuilder
+                .newInstance()
+                .path(ORDER_DEFAULT_URL + "/{order-id}")
+                .buildAndExpand(order.getOrderId())
+                .toUri();
+
+        return ResponseEntity.created(location).build();
+
         return new ResponseEntity<>(mapper.orderToOrderResponseDto(order), HttpStatus.CREATED);
     }
 
@@ -55,7 +69,7 @@ public class OrderController {
     @DeleteMapping("/{order-id}")
     public ResponseEntity cancelOrder(@PathVariable("order-id") long orderId) {
         System.out.println("# cancel order");
-        orderService.cancelOrder();
+        orderService.cancelOrder(orderId);
         return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     }
 }
